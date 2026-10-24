@@ -1,0 +1,72 @@
+name: vido-pos
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: vido-postgres
+    environment:
+      POSTGRES_USER: vido
+      POSTGRES_PASSWORD: vido
+      POSTGRES_DB: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./docker/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U vido -d postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  inventory-service:
+    build:
+      context: .
+      dockerfile: inventory-service/Dockerfile
+    container_name: vido-inventory
+    ports:
+      - "8081:8081"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/inventory
+      SPRING_DATASOURCE_USERNAME: vido
+      SPRING_DATASOURCE_PASSWORD: vido
+      APP_DEMO_RESERVE_DELAY: ${RESERVE_DELAY:-0s}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8081/actuator/health"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 40s
+
+  order-service:
+    build:
+      context: .
+      dockerfile: order-service/Dockerfile
+    container_name: vido-order
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/orders
+      SPRING_DATASOURCE_USERNAME: vido
+      SPRING_DATASOURCE_PASSWORD: vido
+      INVENTORY_CLIENT_BASE_URL: http://inventory-service:8081
+      INVENTORY_CLIENT_CONNECT_TIMEOUT: 500ms
+      INVENTORY_CLIENT_READ_TIMEOUT: 2s
+      APP_DEMO_FAIL_BEFORE_STATUS_UPDATE: ${FAIL_BEFORE_STATUS_UPDATE:-false}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      inventory-service:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8080/actuator/health"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 40s
+
+volumes:
+  postgres-data:

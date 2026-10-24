@@ -1,0 +1,4 @@
+services:
+  order-service:
+    environment:
+      APP_DEMO_FAIL_BEFORE_STATUS_UPDATE: "true"

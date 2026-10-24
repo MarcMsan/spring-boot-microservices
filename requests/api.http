@@ -1,0 +1,78 @@
+### Create a product
+POST http://localhost:8081/api/products
+Content-Type: application/json
+
+{
+  "name": "USB cable",
+  "price": 9.50,
+  "availableQuantity": 5
+}
+
+### Read the product
+GET http://localhost:8081/api/products/{{productId}}
+
+### Change the current price. Existing orders keep the purchase price.
+PATCH http://localhost:8081/api/products/{{productId}}/price
+Content-Type: application/json
+
+{
+  "price": 12.00
+}
+
+### Place an order. The client does not send a price.
+POST http://localhost:8080/api/orders
+Content-Type: application/json
+Idempotency-Key: order-demo-001
+X-Correlation-Id: demo-correlation-001
+
+{
+  "customerEmail": "buyer@example.com",
+  "items": [
+    {
+      "productId": "{{productId}}",
+      "quantity": 2
+    }
+  ]
+}
+
+### Repeat the same key and body. Returns the existing order.
+POST http://localhost:8080/api/orders
+Content-Type: application/json
+Idempotency-Key: order-demo-001
+X-Correlation-Id: demo-correlation-001
+
+{
+  "customerEmail": "buyer@example.com",
+  "items": [
+    {
+      "productId": "{{productId}}",
+      "quantity": 2
+    }
+  ]
+}
+
+### Same key, different quantity. Expect 409.
+POST http://localhost:8080/api/orders
+Content-Type: application/json
+Idempotency-Key: order-demo-001
+
+{
+  "customerEmail": "buyer@example.com",
+  "items": [
+    {
+      "productId": "{{productId}}",
+      "quantity": 1
+    }
+  ]
+}
+
+### Read the order
+GET http://localhost:8080/api/orders/{{orderId}}
+
+### Read the reservation decision
+GET http://localhost:8081/api/reservations/{{orderId}}
+
+### Health
+GET http://localhost:8080/actuator/health
+
+GET http://localhost:8081/actuator/health

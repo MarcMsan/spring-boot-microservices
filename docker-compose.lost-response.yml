@@ -1,0 +1,4 @@
+services:
+  inventory-service:
+    environment:
+      APP_DEMO_RESERVE_DELAY: 5s
