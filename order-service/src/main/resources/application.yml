@@ -1,0 +1,56 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: order-service
+  datasource:
+    url: jdbc:postgresql://localhost:5432/orders
+    username: vido
+    password: vido
+    hikari:
+      maximum-pool-size: 20
+      connection-timeout: 5000
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate.jdbc.time_zone: UTC
+  flyway:
+    enabled: true
+  jackson:
+    serialization:
+      write-dates-as-timestamps: false
+    deserialization:
+      fail-on-unknown-properties: true
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: always
+      probes:
+        enabled: true
+
+inventory:
+  client:
+    base-url: http://localhost:8081
+    connect-timeout: 500ms
+    read-timeout: 2s
+
+app:
+  outbox:
+    enabled: true
+    poll-interval: 2s
+    batch-size: 10
+    processing-lease: 30s
+  demo:
+    fail-before-status-update: false
+
+logging:
+  level:
+    com.vidopos: INFO
