@@ -61,6 +61,10 @@ public class Product {
         return availableQuantity;
     }
 
+    public Instant getCreatedAt() {
+        return createdAt;
+    }
+
     public void setAvailableQuantity(int availableQuantity) {
         this.availableQuantity = availableQuantity;
     }

@@ -1,7 +1,3 @@
-# Stops Inventory Service after creating a product, places an order, then starts it again.
-# The order stays PENDING while inventory is unreachable and later becomes CONFIRMED.
-# Replaying the same Idempotency-Key does not create a second order.
-
 $ErrorActionPreference = "Stop"
 Set-Location (Join-Path $PSScriptRoot "..")
 

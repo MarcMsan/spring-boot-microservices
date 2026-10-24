@@ -4,6 +4,8 @@ import com.vidopos.inventory.web.NotFoundException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.Clock;
+import java.util.Comparator;
+import java.util.List;
 import java.util.UUID;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -28,6 +30,14 @@ public class ProductService {
                 clock.instant());
         products.save(product);
         return toResponse(product);
+    }
+
+    @Transactional(readOnly = true)
+    public List<ProductResponse> list() {
+        return products.findAll().stream()
+                .sorted(Comparator.comparing(Product::getCreatedAt).reversed())
+                .map(ProductService::toResponse)
+                .toList();
     }
 
     @Transactional(readOnly = true)

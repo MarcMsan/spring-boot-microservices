@@ -1,6 +1,3 @@
-# Places several orders at once for a product that has one unit left.
-# Expect one CONFIRMED order and the rest REJECTED. Available quantity ends at 0.
-
 $ErrorActionPreference = "Stop"
 
 $product = Invoke-RestMethod -Method Post -Uri "http://localhost:8081/api/products" -ContentType "application/json" -Body (@{

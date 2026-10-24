@@ -33,12 +33,6 @@ public class ReservationTransaction {
         this.clock = clock;
     }
 
-    /**
-     * One database transaction is the consistency boundary. The advisory lock serializes
-     * duplicate deliveries of the same order. Product rows are then locked in id order so
-     * overlapping orders cannot deadlock or oversell. The decision is inserted here, so a
-     * later delivery returns it and does not move stock again.
-     */
     @Transactional
     public ReservationDecision decide(ReserveStockRequest request) {
         lockOrder(request.orderId());

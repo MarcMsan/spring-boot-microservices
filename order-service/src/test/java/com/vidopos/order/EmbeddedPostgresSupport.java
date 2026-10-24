@@ -24,7 +24,6 @@ final class EmbeddedPostgresSupport {
                 try {
                     postgres.close();
                 } catch (IOException ignored) {
-                    // The test JVM is already exiting.
                 }
             }));
             return postgres;

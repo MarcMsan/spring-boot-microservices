@@ -1,6 +1,3 @@
-# Order Service calls inventory successfully, then fails before it records CONFIRMED.
-# Restarting without the failure flag recovers the same order. Stock moves once.
-
 $ErrorActionPreference = "Stop"
 Set-Location (Join-Path $PSScriptRoot "..")
 

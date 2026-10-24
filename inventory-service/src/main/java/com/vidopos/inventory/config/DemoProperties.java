@@ -8,10 +8,6 @@ import org.springframework.stereotype.Component;
 @ConfigurationProperties(prefix = "app.demo")
 public class DemoProperties {
 
-    /**
-     * Holds the HTTP response after the reservation transaction has committed.
-     * Used to demonstrate a lost response. Zero in normal operation.
-     */
     private Duration reserveDelay = Duration.ZERO;
 
     public Duration getReserveDelay() {

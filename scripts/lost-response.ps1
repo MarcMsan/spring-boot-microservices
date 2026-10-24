@@ -1,7 +1,3 @@
-# Inventory commits the reservation, then holds the HTTP response longer than the order
-# service is willing to wait. The order stays PENDING. The same request is then retried
-# with inventory answering immediately. Stock moves once.
-
 $ErrorActionPreference = "Stop"
 Set-Location (Join-Path $PSScriptRoot "..")
 

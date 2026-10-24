@@ -2,6 +2,7 @@ package com.vidopos.inventory.product;
 
 import jakarta.validation.Valid;
 import java.net.URI;
+import java.util.List;
 import java.util.UUID;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -20,6 +21,11 @@ public class ProductController {
 
     public ProductController(ProductService products) {
         this.products = products;
+    }
+
+    @GetMapping
+    public List<ProductResponse> list() {
+        return products.list();
     }
 
     @PostMapping

@@ -6,6 +6,7 @@ import com.vidopos.order.web.Correlation;
 import com.vidopos.order.web.IdempotencyConflictException;
 import com.vidopos.order.web.InvalidRequestException;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 import java.util.UUID;
@@ -62,6 +63,10 @@ public class OrderSubmissionService {
 
     public OrderResponse get(UUID id) {
         return orders.response(id);
+    }
+
+    public List<OrderResponse> list() {
+        return orders.list();
     }
 
     private static String normalizeKey(String idempotencyKey) {

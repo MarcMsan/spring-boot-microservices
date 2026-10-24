@@ -46,7 +46,6 @@ abstract class OrderIntegrationTest {
             try {
                 server.shutdown();
             } catch (IOException ignored) {
-                // The test JVM is already exiting.
             }
         }));
         return server;

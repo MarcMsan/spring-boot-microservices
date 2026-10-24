@@ -4,6 +4,7 @@ import com.vidopos.order.outbox.OutboxMessage;
 import com.vidopos.order.outbox.OutboxRepository;
 import com.vidopos.order.web.NotFoundException;
 import java.time.Clock;
+import java.util.List;
 import java.util.UUID;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -56,5 +57,10 @@ public class OrderStore {
     @Transactional(readOnly = true)
     public OrderResponse response(UUID id) {
         return OrderMapper.toResponse(getById(id));
+    }
+
+    @Transactional(readOnly = true)
+    public List<OrderResponse> list() {
+        return orders.findAllByOrderByCreatedAtDesc().stream().map(OrderMapper::toResponse).toList();
     }
 }

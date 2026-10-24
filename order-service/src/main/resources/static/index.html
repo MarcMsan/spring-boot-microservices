@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>VIDO POS</title>
+  <style>
+    :root {
+      --ink: #1c1915;
+      --muted: #5c564c;
+      --line: #e3d9c8;
+      --paper: #f6f1e8;
+      --card: #fffdf8;
+      --green: #0e6b45;
+      --green-bg: #e5f5ec;
+      --red: #8d2b2b;
+      --red-bg: #fdecec;
+      --amber: #8a5a00;
+      --amber-bg: #fff4d6;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      color: var(--ink);
+      background: var(--paper);
+      font: 16px/1.45 "Segoe UI", sans-serif;
+    }
+    header, main { width: min(1080px, calc(100% - 32px)); margin: 0 auto; }
+    header { padding: 28px 0 8px; }
+    h1 { margin: 0; font-size: 32px; letter-spacing: -0.03em; }
+    .lede { margin: 8px 0 0; max-width: 680px; color: var(--muted); }
+    .services { display: flex; gap: 10px; margin-top: 16px; }
+    .pill {
+      display: flex; align-items: center; gap: 8px;
+      padding: 8px 12px; border: 1px solid var(--line); border-radius: 999px; background: var(--card);
+    }
+    .dot { width: 9px; height: 9px; border-radius: 50%; background: #b7b1a6; }
+    .dot.up { background: var(--green); }
+    .dot.down { background: var(--red); }
+    main { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; padding: 18px 0 40px; }
+    .card { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 18px; }
+    .span { grid-column: 1 / -1; }
+    h2 { margin: 0 0 4px; font-size: 18px; }
+    .step { color: var(--muted); font-size: 13px; margin-bottom: 14px; }
+    label { display: block; margin: 10px 0 4px; font-size: 13px; color: var(--muted); }
+    input, select, button {
+      font: inherit; color: inherit;
+    }
+    input, select {
+      width: 100%; padding: 9px 10px; border: 1px solid var(--line); border-radius: 10px; background: #fff;
+    }
+    .row { display: flex; gap: 8px; margin-top: 14px; flex-wrap: wrap; }
+    button {
+      border: 0; border-radius: 10px; padding: 9px 14px; background: var(--ink); color: #fff; cursor: pointer;
+    }
+    button.secondary { background: #fff; color: var(--ink); border: 1px solid var(--line); }
+    button:disabled { opacity: 0.45; cursor: default; }
+    table { width: 100%; border-collapse: collapse; margin-top: 14px; font-size: 14px; }
+    th, td { text-align: left; padding: 8px 6px; border-bottom: 1px solid var(--line); vertical-align: top; }
+    th { color: var(--muted); font-weight: 600; font-size: 12px; }
+    .empty { color: var(--muted); margin: 14px 0 0; }
+    .badge {
+      display: inline-block; padding: 3px 8px; border-radius: 999px; font-size: 12px; font-weight: 700;
+      background: #eee; 
+    }
+    .badge.CONFIRMED { background: var(--green-bg); color: var(--green); }
+    .badge.REJECTED { background: var(--red-bg); color: var(--red); }
+    .badge.PENDING { background: var(--amber-bg); color: var(--amber); }
+    .http { font-size: 28px; margin: 0; letter-spacing: -0.03em; }
+    .note { margin: 8px 0 0; color: var(--muted); }
+    code { font-family: Consolas, monospace; font-size: 13px; }
+    @media (max-width: 800px) { main { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>VIDO POS</h1>
+    <p class="lede">Inventory owns the price and the stock. The order service asks inventory to reserve every line, then stores the price it got back. This page does not send a price.</p>
+    <div class="services">
+      <div class="pill"><span id="inventory-dot" class="dot"></span> Inventory <span id="inventory-health">checking</span></div>
+      <div class="pill"><span id="order-dot" class="dot"></span> Orders <span id="order-health">checking</span></div>
+    </div>
+  </header>
+  <main>
+    <section class="card">
+      <h2>1. Create a product</h2>
+      <p class="step">Stored in the inventory database. A refresh loads them again.</p>
+      <label for="name">Name</label>
+      <input id="name" value="USB cable">
+      <label for="price">Price</label>
+      <input id="price" type="number" min="0" step="0.01" value="9.50">
+      <label for="quantity">Available quantity</label>
+      <input id="quantity" type="number" min="0" step="1" value="5">
+      <div class="row"><button id="create" type="button">Create product</button></div>
+      <p id="product-empty" class="empty">No products saved yet.</p>
+      <table id="product-table" hidden>
+        <thead><tr><th>Name</th><th>Price</th><th>Stock</th></tr></thead>
+        <tbody id="products"></tbody>
+      </table>
+    </section>
+    <section class="card">
+      <h2>2. Place an order</h2>
+      <p class="step">The order service, on port 8080, reserves stock and keeps the purchase price.</p>
+      <label for="email">Customer email</label>
+      <input id="email" value="buyer@example.com">
+      <label for="product">Product</label>
+      <select id="product"></select>
+      <label for="order-qty">Quantity</label>
+      <input id="order-qty" type="number" min="1" step="1" value="2">
+      <label for="key">Idempotency key</label>
+      <input id="key">
+      <div class="row">
+        <button id="place" type="button">Place order</button>
+        <button id="replay" class="secondary" type="button" disabled>Send the same request again</button>
+        <button id="conflict" class="secondary" type="button" disabled>Same key, different quantity</button>
+      </div>
+    </section>
+    <section class="card span">
+      <h2>Saved orders</h2>
+      <p class="step">Stored in the order database. A refresh loads them again.</p>
+      <p id="order-empty" class="empty">No orders saved yet.</p>
+      <table id="order-table" hidden>
+        <thead><tr><th>Status</th><th>Email</th><th>Total</th><th>Lines</th></tr></thead>
+        <tbody id="saved-orders"></tbody>
+      </table>
+    </section>
+    <section class="card span">
+      <h2>Latest response</h2>
+      <p id="result-empty" class="empty">Place an order to see the HTTP status, the stored price, and the total.</p>
+      <div id="result" hidden>
+        <p class="http" id="http-status"></p>
+        <p class="note" id="result-note"></p>
+        <table>
+          <tbody id="result-lines"></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+  <script>
+    const inventory = "http://localhost:8081";
+    let products = [];
+    let savedOrders = [];
+    let lastRequest = null;
+
+    const $ = (id) => document.getElementById(id);
+
+    function key() {
+      const alphabet = "abcdefghijklmnopqrstuvwxyz0123456789";
+      let value = "demo";
+      for (let i = 0; i < 12; i++) value += alphabet[Math.floor(Math.random() * alphabet.length)];
+      return value;
+    }
+
+    async function call(url, options) {
+      const response = await fetch(url, options);
+      const text = await response.text();
+      let body = null;
+      if (text) body = JSON.parse(text);
+      return { status: response.status, body };
+    }
+
+    async function refreshHealth() {
+      for (const service of [
+        ["inventory", inventory + "/actuator/health"],
+        ["order", "/actuator/health"]
+      ]) {
+        try {
+          const result = await call(service[1]);
+          const up = result.status === 200 && result.body.status === "UP";
+          $(service[0] + "-dot").className = "dot " + (up ? "up" : "down");
+          $(service[0] + "-health").textContent = up ? "up" : "down";
+        } catch (error) {
+          $(service[0] + "-dot").className = "dot down";
+          $(service[0] + "-health").textContent = "down";
+        }
+      }
+    }
+
+    function renderProducts() {
+      const empty = products.length === 0;
+      $("product-empty").hidden = !empty;
+      $("product-table").hidden = empty;
+      $("products").innerHTML = products.map((product) =>
+        "<tr><td>" + escape(product.name) + "</td><td>" + product.price + "</td><td>" + product.availableQuantity + "</td></tr>"
+      ).join("");
+      const select = $("product");
+      const selected = select.value;
+      select.innerHTML = products.map((product) =>
+        "<option value=\"" + product.id + "\">" + escape(product.name) + " · " + product.availableQuantity + " left</option>"
+      ).join("");
+      if (selected) select.value = selected;
+      $("place").disabled = products.length === 0;
+    }
+
+    function renderOrders() {
+      const empty = savedOrders.length === 0;
+      $("order-empty").hidden = !empty;
+      $("order-table").hidden = empty;
+      const names = Object.fromEntries(products.map((product) => [product.id, product.name]));
+      $("saved-orders").innerHTML = savedOrders.map((order) => {
+        const lines = (order.items || []).map((item) => {
+          const name = names[item.productId] || item.productId;
+          const price = item.unitPrice == null ? "" : " @ " + item.unitPrice;
+          return escape(name + " × " + item.quantity + price);
+        }).join("<br>");
+        const total = order.total == null ? "—" : order.total;
+        return "<tr><td><span class=\"badge " + order.status + "\">" + order.status + "</span></td><td>"
+          + escape(order.customerEmail) + "</td><td>" + total + "</td><td>" + lines + "</td></tr>";
+      }).join("");
+    }
+
+    async function loadSaved() {
+      const [productResult, orderResult] = await Promise.all([
+        call(inventory + "/api/products"),
+        call("/api/orders")
+      ]);
+      if (Array.isArray(productResult.body)) products = productResult.body;
+      if (Array.isArray(orderResult.body)) savedOrders = orderResult.body;
+      renderProducts();
+      renderOrders();
+    }
+
+    function escape(value) {
+      return String(value).replace(/[&<>"]/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;" }[char]));
+    }
+
+    function show(result, note) {
+      $("result-empty").hidden = true;
+      $("result").hidden = false;
+      const names = { 200: "200 OK", 201: "201 Created", 202: "202 Accepted", 409: "409 Conflict" };
+      $("http-status").textContent = names[result.status] || (result.status + " " + (result.body.error || ""));
+      $("result-note").textContent = note;
+      const order = result.body && result.body.id ? result.body : null;
+      const rows = [];
+      if (order) {
+        rows.push(["Status", "<span class=\"badge " + order.status + "\">" + order.status + "</span>"]);
+        rows.push(["Order", "<code>" + order.id + "</code>"]);
+        rows.push(["Email", escape(order.customerEmail)]);
+        rows.push(["Total", order.total == null ? "—" : order.total]);
+        (order.items || []).forEach((item) => {
+          rows.push(["Line", escape(item.quantity + " × " + item.unitPrice + " = " + item.lineTotal)]);
+        });
+        if (order.rejectionReason) rows.push(["Reason", escape(order.rejectionReason)]);
+      } else if (result.body) {
+        rows.push(["Message", escape(result.body.message || "Request failed")]);
+        (result.body.details || []).forEach((detail) => rows.push(["Detail", escape(detail)]));
+      }
+      $("result-lines").innerHTML = rows.map((row) => "<tr><th>" + row[0] + "</th><td>" + row[1] + "</td></tr>").join("");
+    }
+
+    async function submit(body, idempotencyKey, note) {
+      const result = await call("/api/orders", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Idempotency-Key": idempotencyKey,
+          "X-Correlation-Id": idempotencyKey
+        },
+        body: JSON.stringify(body)
+      });
+      show(result, note);
+      await loadSaved();
+      return result;
+    }
+
+    $("key").value = key();
+    $("create").onclick = async () => {
+      const result = await call(inventory + "/api/products", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: $("name").value,
+          price: Number($("price").value),
+          availableQuantity: Number($("quantity").value)
+        })
+      });
+      if (result.status !== 201) {
+        show(result, "Inventory rejected the product.");
+        return;
+      }
+      await loadSaved();
+      $("product").value = result.body.id;
+    };
+
+    $("place").onclick = async () => {
+      const body = {
+        customerEmail: $("email").value,
+        items: [{ productId: $("product").value, quantity: Number($("order-qty").value) }]
+      };
+      lastRequest = { body, key: $("key").value };
+      await submit(body, lastRequest.key, "First delivery. A resolved order is 201. The unit price came from inventory.");
+      $("replay").disabled = false;
+      $("conflict").disabled = false;
+    };
+
+    $("replay").onclick = async () => {
+      await submit(lastRequest.body, lastRequest.key, "Same key and the same body. This returns 200 and the same order. Stock is not reserved again.");
+    };
+
+    $("conflict").onclick = async () => {
+      const body = {
+        customerEmail: lastRequest.body.customerEmail,
+        items: [{ productId: lastRequest.body.items[0].productId, quantity: lastRequest.body.items[0].quantity + 1 }]
+      };
+      await submit(body, lastRequest.key, "Same key and a different quantity. This is rejected with 409. The original order stays as it was.");
+    };
+
+    loadSaved();
+    refreshHealth();
+    setInterval(refreshHealth, 5000);
+  </script>
+</body>
+</html>

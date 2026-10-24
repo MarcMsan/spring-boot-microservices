@@ -3,6 +3,7 @@ package com.vidopos.order.orders;
 import com.vidopos.order.web.Correlation;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
+import java.util.List;
 import java.util.UUID;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -22,6 +23,11 @@ public class OrderController {
 
     public OrderController(OrderSubmissionService orders) {
         this.orders = orders;
+    }
+
+    @GetMapping
+    public List<OrderResponse> list() {
+        return orders.list();
     }
 
     @PostMapping
